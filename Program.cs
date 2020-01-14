@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using Microsoft.Build.Construction;
@@ -32,14 +33,17 @@
 
                 var propertyGroupConditions =
                     _configurations.Select(
-                        configuration => $" '$(Configuration)|$(Platform)' == '{configuration}|{_platform}' ").ToList();
+                        configuration => $"'$(Configuration)|$(Platform)' == '{configuration}|{_platform}'").ToList();
                 _defaultLanguage = "en-US";
+
 
                 foreach (var project in projectList)
                 {
                     var projectCollection = new ProjectCollection();
                     var proj = projectCollection.LoadProject(project);
                     var projectPropertyGroupElements = proj.Xml.PropertyGroups.Where(e => propertyGroupConditions.Contains(e.Condition)).ToList();
+
+                    Console.WriteLine($" {projectPropertyGroupElements.Count} entries for {String.Join(" ",_configurations)}|{_platform} in {project}");
 
                     foreach (var command in commands)
                     {
@@ -76,6 +80,10 @@
                                         {
                                             new KeyValuePair<string, string>("Link",paths.Last())
                                 });
+                                break;
+                            case "/DEBUGTYPE":
+                            case "/DT":
+                                SetProperty(projectPropertyGroupElements, "DebugType", command.Value);
                                 break;
                         }
                     }
@@ -129,7 +137,7 @@
             return commandDictionary;
         }
 
-        private static async Task<List<string>> GetProjectListAsync(string filePath)
+        private static async Task<List<string>> GetProjectListFromTxtAsync(string filePath)
         {
             var projectList = new List<string>();
             using (var file = new StreamReader(filePath))
@@ -142,6 +150,39 @@
             }
 
             return projectList;
+        }
+        private static async Task<List<string>> GetProjectListFromSlnAsync(string filePath)
+        {
+            string solutionDir = Directory.GetParent(filePath).FullName;
+            var projectList = new List<string>();
+            Regex regex = new Regex("Project\\(\"(?<slnid>.*)\"\\).*=.*\"(?<prjname>.*)\".*,.*\"(?<projfilepath>.*)\".*,.*\"\\{(?<projid>.*)\\}.*\"");
+            using (var file = new StreamReader(filePath))
+            {
+                string line;
+                while ((line = await file.ReadLineAsync()) != null)
+                {
+                    Match match = regex.Match(line);
+                    if (match.Success)
+                    {
+                        string projectPath = Path.GetFullPath($"{solutionDir}/{match.Groups["projfilepath"]}");
+                        if (File.Exists(projectPath))
+                            projectList.Add(projectPath);
+                        else
+                            Console.WriteLine($"referenced project file in solution is not availlable at {projectPath}");
+                    }
+                }
+            }
+            Console.WriteLine($" {projectList.Count} project found in solution");
+
+            return projectList;
+        }
+
+        private static async Task<List<string>> GetProjectListAsync(string filePath)
+        {
+            if (filePath.EndsWith(".sln"))
+                return await GetProjectListFromSlnAsync(filePath);
+            else
+                return await GetProjectListFromTxtAsync(filePath);
         }
 
         private static void SetProperty(IEnumerable<ProjectPropertyGroupElement> projectPropertyGroupElements, string key, string value)

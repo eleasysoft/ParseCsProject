@@ -1,4 +1,4 @@
-# ankitvijay-ParseCsProject
+# ParseCsProject
 
 ParseCsProject is a command line utility to parse a collection of CS Projects (.csproj files) and change settings like FxCop, adding custom dictionary etc in one go.
 
