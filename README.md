@@ -6,10 +6,14 @@ How to Use
 
 ParseCsProject accepts following arguments.
 
-FilePath - This is a mandatory argument. You need to pass the absolute or relative path for text file where list of projects exists. 
+FilePath - This is a mandatory argument. You need to pass the absolute or relative path for text file where list of projects exists.
+         - A solution file may also be used. It will be recognize with the file extention '.sln'
     
     Example: namespace.txt
     The content of the file should be list of csproj file paths that need to be modified. Each line should contain one file path.
+
+    Example: mysolution.sln
+    list of csproj will be extracted.
     
     
 [/C] or [/Configuration] - Defines the comma separated values of configuraton for which the settings have to be modified.
@@ -50,6 +54,10 @@ FilePath - This is a mandatory argument. You need to pass the absolute or relati
     Example: /cd="..\..\CustomDictionary.xml"
     Default Value: en-US
 
+[/cd] or [/DebugType] - Set the debug type.
+    
+    Example: /dt="pdbonly"
+    Default Value: NA
     
 Full Example:
 
