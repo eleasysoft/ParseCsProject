@@ -41,7 +41,7 @@
                 {
                     var projectCollection = new ProjectCollection();
                     var proj = projectCollection.LoadProject(project);
-                    var projectPropertyGroupElements = proj.Xml.PropertyGroups.Where(e => propertyGroupConditions.Contains(e.Condition)).ToList();
+                    var projectPropertyGroupElements = proj.Xml.PropertyGroups.Where(e => propertyGroupConditions.Any(c => e.Condition.Contains(c))).ToList();
 
                     Console.WriteLine($" {projectPropertyGroupElements.Count} entries for {String.Join(" ",_configurations)}|{_platform} in {project}");
 
